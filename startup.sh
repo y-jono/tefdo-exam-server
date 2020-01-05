@@ -32,6 +32,7 @@ firewall-cmd --reload
 dnf config-manager --set-enabled PowerTools
 dnf -y install epel-release
 dnf config-manager --set-enabled epel
+dnf clean all && dnf update -y
 
 dnf -y install redhat-rpm-config || exit 1
 dnf -y install expect byobu || exit 1
@@ -48,7 +49,7 @@ sudo sed -i "s/session.gc_maxlifetime = 1440/session.gc_maxlifetime = 2880/" /et
 sudo sed -i "s/max_execution_time = 30/max_execution_time = 120/" /etc/php.ini
 
 # git clone testlink
-if [ ! -e /var/lib/testlink-code]; then
+if [ ! -e /var/lib/testlink-code ]; then
     git clone -b testlink_1_9 https://github.com/TestLinkOpenSourceTRMS/testlink-code.git
     sudo mv testlink-code /var/lib/
     sudo chown -R apache:apache /var/lib/testlink-code
@@ -74,7 +75,7 @@ dnf -y install ruby ruby-devel || exit 1
 
 # gem rails
 echo 'gem: -N' >/etc/gemrc
-gem install rails -N || exit 1
+# gem install rails -N || exit 1
 
 # dnf redmine HTTP RDB
 dnf -y install httpd-devel mod_ssl mariadb-server mariadb-devel || exit 1
@@ -142,17 +143,15 @@ production:
 EOT
 
 cd /var/lib/redmine || exit 1
-gem install json || exit 1
-gem install sprockets -v 3.7.2 || exit 1
-gem uninstall bundler
-gem install bundler --version '1.17.3' || exit 1
+# gem install json || exit 1
+# gem install sprockets -v 3.7.2 || exit 1
+gem install bundler --version '1.17.3' -N || exit 1
 bundle install --without development test || exit 1
 bundle exec rake generate_secret_token || exit 1
 RAILS_ENV=production bundle exec rake db:migrate
 
 # httpd.conf
 cat <<-EOT >/etc/httpd/conf.d/testlink.conf
-NameVirtualHost *:30000
 Listen 30000
 <VirtualHost *:30000>
 DocumentRoot /var/lib/testlink-code
@@ -166,7 +165,6 @@ CustomLog /var/log/httpd/testlink-access_log common
 </VirtualHost>
 EOT
 cat <<-EOT >/etc/httpd/conf/redmine.conf
-NameVirtualHost *:30001
 Listen 30001
 <VirtualHost *:30001>
 DocumentRoot /var/lib/redmine/public
@@ -181,9 +179,15 @@ CustomLog /var/log/httpd/redmine-access_log common
 EOT
 
 # httpd redmine
-gem install passenger -N || exit 1
-passenger-install-apache2-module -a
-passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
+# https://www.phusionpassenger.com/library/install/apache/yum_repo/
+# gem install passenger -N || exit 1
+sudo dnf install -y curl || exit 
+sudo curl --fail -sSLo /etc/yum.repos.d/passenger.repo https://oss-binaries.phusionpassenger.com/yum/definitions/el-passenger.repo
+sudo dnf install -y mod_passenger 
+#|| sudo dnf config-manager --enable cr && sudo yum install -y mod_passenger
+# passenger-install-apache2-module -a
+# passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
+
 chown -R apache:apache /var/lib/redmine
 echo "Include conf/redmine.conf" >>/etc/httpd/conf/httpd.conf
 
