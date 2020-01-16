@@ -22,9 +22,9 @@ fi
 firewall-cmd --add-service=http --zone=public --permanent
 firewall-cmd --add-service=https --zone=public --permanent
 # firewall testlink
-firewall-cmd --zone=public --add-port=30000/tcp --permanent
+firewall-cmd --zone=public --add-port=3000/tcp --permanent
 # firewall redmine
-firewall-cmd --zone=public --add-port=30001/tcp --permanent
+firewall-cmd --zone=public --add-port=3001/tcp --permanent
 
 firewall-cmd --reload
 
@@ -44,18 +44,18 @@ dnf -y install httpd-devel mod_ssl php php-devel php-pear mariadb-server \
  php-mbstring php-xml php-gd php-mysqlnd || exit 1
 
 # php.ini testlink
-sudo cp /etc/php.ini /etc/php.ini.bak
-sudo sed -i "s/session.gc_maxlifetime = 1440/session.gc_maxlifetime = 2880/" /etc/php.ini
-sudo sed -i "s/max_execution_time = 30/max_execution_time = 120/" /etc/php.ini
+cp /etc/php.ini /etc/php.ini.bak
+sed -i "s/session.gc_maxlifetime = 1440/session.gc_maxlifetime = 2880/" /etc/php.ini
+sed -i "s/max_execution_time = 30/max_execution_time = 120/" /etc/php.ini
 
 # git clone testlink
 if [ ! -e /var/lib/testlink-code ]; then
     git clone -b testlink_1_9 https://github.com/TestLinkOpenSourceTRMS/testlink-code.git
-    sudo mv testlink-code /var/lib/
-    sudo chown -R apache:apache /var/lib/testlink-code
-    sudo cp /var/lib/testlink-code/custom_config.inc.php.example /var/lib/testlink-code/custom_config.inc.php
-    sudo sed -i "s|// $tlCfg->log_path = '/var/testlink-ga-testlink-code/logs/';|$tlCfg->log_path = '/var/lib/testlink-code/logs/';|" /var/lib/testlink-code/custom_config.inc.php
-    sudo sed -i "s|// $g_repositoryPath = '/var/testlink-ga-testlink-code/upload_area/';|$g_repositoryPath = '/var/lib/testlink-code/upload_area/';|" /var/lib/testlink-code/custom_config.inc.php
+    mv testlink-code /var/lib/
+    chown -R apache:apache /var/lib/testlink-code
+    cp /var/lib/testlink-code/custom_config.inc.php.example /var/lib/testlink-code/custom_config.inc.php
+    sed -i "s|// $tlCfg->log_path = '/var/testlink-ga-testlink-code/logs/';|$tlCfg->log_path = '/var/lib/testlink-code/logs/';|" /var/lib/testlink-code/custom_config.inc.php
+    sed -i "s|// $g_repositoryPath = '/var/testlink-ga-testlink-code/upload_area/';|$g_repositoryPath = '/var/lib/testlink-code/upload_area/';|" /var/lib/testlink-code/custom_config.inc.php
 fi
 
 # dnf redmine4 (build)
@@ -72,10 +72,6 @@ dnf -y install libxml2-devel libxslt-devel gcc bzip2 openssl-devel \
 dnf -y install ImageMagick-devel libyaml-devel || exit 1
 # dnf redmine ruby
 dnf -y install ruby ruby-devel || exit 1
-
-# gem rails
-echo 'gem: -N' >/etc/gemrc
-# gem install rails -N || exit 1
 
 # dnf redmine HTTP RDB
 dnf -y install httpd-devel mod_ssl mariadb-server mariadb-devel || exit 1
@@ -142,18 +138,19 @@ production:
     encoding: utf8
 EOT
 
-cd /var/lib/redmine || exit 1
-# gem install json || exit 1
-# gem install sprockets -v 3.7.2 || exit 1
+## rails
+echo 'gem: -N' >/etc/gemrc
+cd /var/lib/redmine
 gem install bundler --version '1.17.3' -N || exit 1
 bundle install --without development test || exit 1
 bundle exec rake generate_secret_token || exit 1
 RAILS_ENV=production bundle exec rake db:migrate
 
-# httpd.conf
+## httpd testlink.conf
 cat <<-EOT >/etc/httpd/conf.d/testlink.conf
-Listen 30000
-<VirtualHost *:30000>
+Listen 3001
+<VirtualHost 192.168.2.200:3001>
+ServerName www.yjono.com
 DocumentRoot /var/lib/testlink-code
 <Directory "/var/lib/testlink-code">
         Options FollowSymLinks
@@ -164,9 +161,11 @@ ErrorLog /var/log/httpd/testlink-error_log
 CustomLog /var/log/httpd/testlink-access_log common
 </VirtualHost>
 EOT
-cat <<-EOT >/etc/httpd/conf/redmine.conf
-Listen 30001
-<VirtualHost *:30001>
+## httpd redmine.conf
+cat <<-EOT >/etc/httpd/conf.d/redmine.conf
+Listen 3000
+<VirtualHost 192.168.2.200:3000>
+ServerName www.yjono.com
 DocumentRoot /var/lib/redmine/public
 <Directory "/var/lib/redmine/public">
         Options FollowSymLinks
@@ -178,18 +177,23 @@ CustomLog /var/log/httpd/redmine-access_log common
 </VirtualHost>
 EOT
 
-# httpd redmine
+## passenger
+## install by yum repo
 # https://www.phusionpassenger.com/library/install/apache/yum_repo/
-# gem install passenger -N || exit 1
-sudo dnf install -y curl || exit 
-sudo curl --fail -sSLo /etc/yum.repos.d/passenger.repo https://oss-binaries.phusionpassenger.com/yum/definitions/el-passenger.repo
-sudo dnf install -y mod_passenger 
-#|| sudo dnf config-manager --enable cr && sudo yum install -y mod_passenger
-# passenger-install-apache2-module -a
-# passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
+# dnf install -y curl || exit 
+# curl --fail -sSLo /etc/yum.repos.d/passenger.repo https://oss-binaries.phusionpassenger.com/yum/definitions/el-passenger.repo
+# dnf install -y mod_passenger 
+
+## install by gem
+dnf install -y curl curl-devel || exit 
+gem install passenger -N || exit 1
+passenger-install-apache2-module -a
+passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
 
 chown -R apache:apache /var/lib/redmine
-echo "Include conf/redmine.conf" >>/etc/httpd/conf/httpd.conf
+
+## hosts
+echo "192.168.2.200 www.yjono.com www" >>/etc/hosts
 
 systemctl status httpd.service >/dev/null 2>&1 || systemctl start httpd.service
 for i in {1..5}; do
@@ -199,6 +203,13 @@ for i in {1..5}; do
 done
 systemctl enable httpd.service || exit 1
 
+## selinux
+dnf install -y setools setools-console policycoreutils-python-utils  || exit 1
+## 3000, 3001が未登録なら追加する
+#semanage port -l | grep http
+## 3000,3001のhttpポートアクセス許可
+semanage port -a -t http_port_t -p tcp 3000
+semanage port -a -t http_port_t -p tcp 3001
 reboot
 
 }
