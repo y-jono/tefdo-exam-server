@@ -13,7 +13,6 @@ dnf -y install redhat-rpm-config || exit 1
 dnf config-manager --set-enabled PowerTools
 dnf -y install epel-release
 dnf config-manager --set-enabled epel
-dnf clean all && dnf update -y || exit 1
 
 # locale settings
 dnf install -y langpacks-ja || exit 1
@@ -62,7 +61,7 @@ fi
 
 # dnf install packages for building Ruby on Rails
 dnf -y install libxml2-devel libxslt-devel gcc bzip2 openssl-devel \
- zlib-devel gdbm-devel ncurses-devel autoconf automake bison gcc-c++ \
+ zlib-devel gdbm-devel ncurses-devel make autoconf automake bison gcc-c++ \
  libffi-devel libtool patch readline-devel sqlite-devel \
  glibc-headers glibc-devel libicu-devel libidn-devel libyaml || exit 1
 
@@ -100,6 +99,8 @@ done
 systemctl enable mariadb.service || exit 1
 
 # MariaDB password settings
+## expectパッケージに入っている mkpasswd コマンドをインストールする
+dnf install -y expect || exit 1
 if [ ! -f /root/.my.cnf ]; then
 NEWMYSQLPASSWORD=$(mkpasswd -l 32 -d 9 -c 9 -C 9 -s 0 -2)
 
@@ -119,10 +120,13 @@ USERNAME="rm_$(mkpasswd -l 10 -C 0 -s 0)"
 PASSWORD=$(mkpasswd -l 32 -d 9 -c 9 -C 9 -s 0 -2)
 
 # MariaDB database for Redmine
+echo "DROP DATABASE IF EXISTS db_redmine;" | mysql --defaults-file=/root/.my.cnf
 echo "create database db_redmine default character set utf8;" | mysql --defaults-file=/root/.my.cnf
 echo "grant all on db_redmine.* to $USERNAME@'localhost' identified by '$PASSWORD';" | mysql --defaults-file=/root/.my.cnf
 
 # MariaDB database for Testlink
+echo "DROP DATABASE IF EXISTS testlink;" | mysql --defaults-file=/root/.my.cnf
+echo "DROP USER 'testlinkuser'@'localhost';" | mysql --defaults-file=/root/.my.cnf
 echo "CREATE DATABASE testlink;" | mysql --defaults-file=/root/.my.cnf
 echo "CREATE USER 'testlinkuser'@'localhost' IDENTIFIED BY '$PASSWORD';" | mysql --defaults-file=/root/.my.cnf
 echo "GRANT ALL PRIVILEGES ON testlink.* TO 'testlinkuser'@'localhost' IDENTIFIED BY '$PASSWORD' WITH GRANT OPTION;" | mysql --defaults-file=/root/.my.cnf
@@ -142,9 +146,11 @@ production:
 EOT
 
 ## Install redmine gems
+cp /etc/gemrc /etc/gemrc.bak
 echo 'gem: -N' >/etc/gemrc
 cd /var/lib/redmine
 gem install bundler --version '1.17.3' -N || exit 1
+bundle config build.nokogiri --use-system-libraries || exit 1
 bundle install --without development test || exit 1
 bundle exec rake generate_secret_token || exit 1
 RAILS_ENV=production bundle exec rake db:migrate
@@ -192,12 +198,16 @@ gem install passenger -N || exit 1
 passenger-install-apache2-module -a
 passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
 
+## selinux passenger permission
+/sbin/restorecon -v /usr/share/gems/gems/passenger-6.0.4/buildout/support-binaries/PassengerAgent
+
 # Change owner of host files 
 chown -R apache:apache /var/lib/testlink
 chown -R apache:apache /var/lib/redmine
 
-## Setting Server IP hostname
-echo "192.168.2.200 www.yjono.com www" >>/etc/hosts
+## Setting Server IP hostnam
+cp /etc/hosts /etc/hosts.bak
+echo "192.168.2.200 www.yjono.com www" >/etc/hosts
 
 ## start httpd service
 systemctl status httpd.service >/dev/null 2>&1 || systemctl start httpd.service
@@ -218,9 +228,13 @@ semanage port -a -t http_port_t -p tcp 3000
 semanage port -a -t http_port_t -p tcp 3001
 ## httpdプロセスにファイルアクセスを許可する
 setsebool -P httpd_read_user_content 1
+setsebool -P httpd_can_network_connect 1
 
 ## Option サーバーに乗り込んで操作するときに便利なツール
-dnf -y install expect byobu || exit 1
+dnf -y install byobu || exit 1
+
+## インストールしすぎて余ったpackageを削除する
+dnf clean all -y || exit 1
 
 # 全ての設定が再起動しても反映されていることを保証する為に、Provisioning完了後は再起動して確認する
 reboot
