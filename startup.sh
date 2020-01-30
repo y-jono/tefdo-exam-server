@@ -207,7 +207,7 @@ chown -R apache:apache /var/lib/redmine
 
 ## Setting Server IP hostnam
 cp /etc/hosts /etc/hosts.bak
-echo "192.168.2.200 www.yjono.com www" >/etc/hosts
+echo "192.168.2.200 www.yjono.com www" >>/etc/hosts
 
 ## start httpd service
 systemctl status httpd.service >/dev/null 2>&1 || systemctl start httpd.service
