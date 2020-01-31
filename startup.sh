@@ -13,6 +13,8 @@ dnf -y install redhat-rpm-config || exit 1
 dnf config-manager --set-enabled PowerTools
 dnf -y install epel-release
 dnf config-manager --set-enabled epel
+## レポジトリ設定を更新したのでmetadataやpackageの不整合を防ぐために色々クリアする
+dnf clean all -y || exit 1
 
 # locale settings
 dnf install -y langpacks-ja || exit 1
@@ -233,8 +235,6 @@ setsebool -P httpd_can_network_connect 1
 ## Option サーバーに乗り込んで操作するときに便利なツール
 dnf -y install byobu || exit 1
 
-## インストールしすぎて余ったpackageを削除する
-dnf clean all -y || exit 1
 
 # 全ての設定が再起動しても反映されていることを保証する為に、Provisioning完了後は再起動して確認する
 reboot
