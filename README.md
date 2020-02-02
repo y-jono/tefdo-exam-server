@@ -74,10 +74,22 @@ VBoxManage.exe: error: Details: code E_FAIL (0x80004005), component ConsoleWrap,
 [^2]: ソフトウェアのダウンロードサイズが大きいため、通信料が従量課金のネットワークではやめた方がいいでしょう。
 
 ```shell
+cd .¥path¥to¥this¥repo
 vagrant provision
 ```
 
 ブラウザで[Testlink](http://192.168.2.200:3001)と[Redmine](http://192.168.2.200:3000)が起動していることを確認しましょう。
+
+**ブラウザに何も表示されなかったら**
+
+ホストとゲスト（仮想マシン）の間が通信できていますか？確認して、繋がっていなければ仮想マシンの再起動を試してみてください。
+
+```shell
+# ホストのshell
+ping 192.168.2.200
+# 繋がっていないことがわかったら仮想マシンを再起動
+vagrant reload
+```
 
 **vagrant provisionでエラーが出たら**
 
@@ -118,8 +130,24 @@ SELinuxが原因で動かないことがあります。 `setenforce 0` で一旦
 用がなくなったら仮想マシンを停止しましょう。自らコマンドで停止しない場合、VirtualBoxのプロセスはOSが適当なタイミングで止めるようです。
 
 ```shell
+cd .¥path¥to¥this¥repo
 vagrant halt
 ```
+
+## 仮想マシンが必要ないなと思ったら
+
+仮想マシンを使わないと確信したら、マシンごと削除しましょう。
+
+```shell
+cd .¥path¥to¥this¥repo
+vagrant destroy
+```
+
+## Vagrantのアンインストール
+
+Vagrantを使わないと確信したら、削除してしまいましょう。
+
+[Uninstalling Vagrant](https://www.vagrantup.com/docs/installation/uninstallation.html)
 
 # (Option)VPS(Vultr)でサービスを公開する
 
