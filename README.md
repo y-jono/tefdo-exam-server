@@ -3,9 +3,9 @@
 このリポジトリはテストケースを管理するためのサービスである[TestLink](http://testlink.org)と、バグを管理するサービスである[Redmine](https://www.redmine.org)を作成できます。
 プロビジョニングスクリプト`startup.sh`を使うとTestlinkサービスとRedmineサービスを提供するサーバーを作成できます。
 
-利用ツール: Vagrant
-OS: CentOS 8
-デプロイターゲット: VirtualBox(仮想マシン), Vultr(VPSサービス)
+- 利用ツール: Vagrant
+- OS: CentOS 8
+- デプロイターゲット: VirtualBox(仮想マシン), Vultr(VPSサービス)
 
 # Vagrant
 
@@ -102,7 +102,10 @@ The SSH command responded with a non-zero
 
 ## サービスを触ってみる
 
-[Testlink日本語化プロジェクト](https://w.atwiki.jp/testlink/pages/25.html)や[Redmine.jp](http://redmine.jp)を参考にサービスを使ってみてください。
+- [Testlink日本語化プロジェクト](https://w.atwiki.jp/testlink/pages/25.html)
+- [Redmine.jp](http://redmine.jp)
+- [Redmineデフォルトデータのロード](http://redmine.jp/tech_note/first-step/admin/load_default_data/)
+
 
 **redmineが動かないことがあったら**
 

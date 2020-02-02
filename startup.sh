@@ -220,18 +220,18 @@ systemctl enable httpd.service || exit 1
 
 ## SELinux
 ## redmineのSELinux設定を追い込むのは非常に骨が折れるため、いったんOFFとしエラーログを記録しておく
-set enforce 0
-dnf install -y setools setools-console selinux-policy-devel policycoreutils-python-utils setroubleshoot-server || exit 1
+setenforce 0
+# dnf install -y setools setools-console selinux-policy-devel policycoreutils-python-utils setroubleshoot-server || exit 1
 
 ## 3000, 3001が未登録なら追加する
 #semanage port -l | grep http
 
 ## 3000,3001のhttpポートアクセス許可
-semanage port -a -t http_port_t -p tcp 3000
-semanage port -a -t http_port_t -p tcp 3001
+# semanage port -a -t http_port_t -p tcp 3000
+# semanage port -a -t http_port_t -p tcp 3001
 ## httpdプロセスにファイルアクセスを許可する
-setsebool -P httpd_read_user_content 1
-setsebool -P httpd_can_network_connect 1
+# setsebool -P httpd_read_user_content 1
+# setsebool -P httpd_can_network_connect 1
 
 ## SELinux redmine 設定
 ## 参考: http://blog.redmine.jp/articles/3_4/install/enable-selinux/
