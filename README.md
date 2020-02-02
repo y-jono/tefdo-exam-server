@@ -53,6 +53,20 @@ vagrant up
 
 [VirtualBox で Failed to open/create the internal network 'HostInterfaceNetworking-VirtualBox Host-Only Ethernet Adapter' が出た時の対処](https://qiita.com/ExA_DEV/items/ae80a7d767144c2e1992)
 
+```shell
+There was an error while executing `VBoxManage`, a CLI used by Vagrant
+for controlling VirtualBox. The command and stderr is shown below.
+
+Command: ["startvm", "6edd0a17-66ed-4c51-9fc2-17633dc6a25c", "--type", "headless"]
+
+Stderr: VBoxManage.exe: error: Failed to open/create the internal network 'HostInterfaceNetworking-VirtualBox Host-Only Ethernet Adapter #2' (VERR_INTNET_FLT_IF_NOT_FOUND).
+VBoxManage.exe: error: Failed to attach the network LUN (VERR_INTNET_FLT_IF_NOT_FOUND)
+VBoxManage.exe: error: Details: code E_FAIL (0x80004005), component ConsoleWrap, interface IConsole
+```
+
+ホーム　ネットワークとインターネット　状態　アダプターのオプションを変更する
+対象のネットワークアダプターについて、IPv6のオプションを外し、無効ー有効と変更する。
+
 ## 仮想マシンにサービスをデプロイ
 
 仮想マシンが起動したら、startup.shに従ってサービスをデプロイします。[^2]
