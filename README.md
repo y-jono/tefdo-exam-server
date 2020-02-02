@@ -104,15 +104,11 @@ The SSH command responded with a non-zero
 
 [Testlink日本語化プロジェクト](https://w.atwiki.jp/testlink/pages/25.html)や[Redmine.jp](http://redmine.jp)を参考にサービスを使ってみてください。
 
-**エラーが出たら**
+**redmineが動かないことがあったら**
 
-`setenforce 0`
+SELinuxが原因で動かないことがあります。 `setenforce 0` で一旦無効にして OFF にしたら動作するかを確かめてみましょう。
 
-```shell
-Jan 31 19:11:26 localhost dbus-daemon[606]: [system] Activating service name='org.fedoraproject.Setroubleshootd' requested by ':1.137' (uid=0 pid=533 comm="/usr/sbin/sedispatch " label="system_u:system_r:auditd_t:s0") (using servicehelper)
-Jan 31 19:11:28 localhost dbus-daemon[606]: [system] Successfully activated service 'org.fedoraproject.Setroubleshootd'
-Jan 31 19:11:29 localhost setroubleshoot[6711]: failed to retrieve rpm info for /var/lib/redmine/config.ru
-```
+
 
 ## 仮想マシンを停止する
 
