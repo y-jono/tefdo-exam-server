@@ -57,8 +57,8 @@ if [ ! -e /var/lib/testlink ]; then
     mv testlink /var/lib/
     chown -R apache:apache /var/lib/testlink
     cp /var/lib/testlink/custom_config.inc.php.example /var/lib/testlink/custom_config.inc.php
-    sed -i "s|// $tlCfg->log_path = '/var/testlink-ga-testlink-code/logs/';|$tlCfg->log_path = '/var/lib/testlink/logs/';|" /var/lib/testlink/custom_config.inc.php
-    sed -i "s|// $g_repositoryPath = '/var/testlink-ga-testlink-code/upload_area/';|$g_repositoryPath = '/var/lib/testlink/upload_area/';|" /var/lib/testlink/custom_config.inc.php
+    sed -i.bak "s|// \$tlCfg->log_path = '/var/testlink-ga-testlink-code/logs/';|\$tlCfg->log_path = '/var/lib/testlink/logs/';|" /var/lib/testlink/custom_config.inc.php
+    sed -i.bak "s|// \$g_repositoryPath = '/var/testlink-ga-testlink-code/upload_area/';|\$g_repositoryPath = '/var/lib/testlink/upload_area/';|" /var/lib/testlink/custom_config.inc.php
 fi
 
 ## dnf install packages for building Ruby on Rails
@@ -151,11 +151,11 @@ EOT
 cp /etc/gemrc /etc/gemrc.bak
 echo 'gem: -N' >/etc/gemrc
 cd /var/lib/redmine
-gem install bundler --version '1.17.3' -N || exit 1
-bundle config build.nokogiri --use-system-libraries || exit 1
-bundle install --without development test || exit 1
-bundle exec rake generate_secret_token || exit 1
-RAILS_ENV=production bundle exec rake db:migrate
+# gem install bundler --version '1.17.3' -N || exit 1
+# bundle config build.nokogiri --use-system-libraries || exit 1
+# bundle install --without development test || exit 1
+# bundle exec rake generate_secret_token || exit 1
+# RAILS_ENV=production bundle exec rake db:migrate
 
 ## Setting testlink httpd config
 cat <<-EOT >/etc/httpd/conf.d/testlink.conf
@@ -196,9 +196,9 @@ EOT
 
 ## Install Passenger(mod_rails)  by gem
 dnf install -y curl curl-devel || exit 
-gem install passenger -N || exit 1
-passenger-install-apache2-module --auto --languages ruby
-passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
+# gem install passenger -N || exit 1
+# passenger-install-apache2-module --auto --languages ruby
+# passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
 
 ## Change owner of host files 
 chown -R apache:apache /var/lib/testlink
@@ -221,6 +221,8 @@ systemctl enable httpd.service || exit 1
 ## SELinux
 ## redmineのSELinux設定を追い込むのは非常に骨が折れるため、いったんOFFとしエラーログを記録しておく
 setenforce 0
+sed -i.bak "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
+
 # dnf install -y setools setools-console selinux-policy-devel policycoreutils-python-utils setroubleshoot-server || exit 1
 
 ## 3000, 3001が未登録なら追加する
