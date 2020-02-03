@@ -35,6 +35,8 @@ firewall-cmd --add-service=https --zone=public --permanent
 firewall-cmd --zone=public --add-port=3000/tcp --permanent
 ## firewall open redmine port
 firewall-cmd --zone=public --add-port=3001/tcp --permanent
+## firewall open phpmyadmin port
+firewall-cmd --zone=public --add-port=3002/tcp --permanent
 ## firewallを再起動しポート設定を適用する
 firewall-cmd --reload
 
@@ -172,7 +174,7 @@ ErrorLog /var/log/httpd/testlink-error_log
 CustomLog /var/log/httpd/testlink-access_log common
 </VirtualHost>
 EOT
-## Setting Testlink Redmine config
+## Setting Redmine httpd config
 cat <<-EOT >/etc/httpd/conf.d/redmine.conf
 Listen 3000
 <VirtualHost 192.168.2.200:3000>
@@ -185,6 +187,21 @@ DocumentRoot /var/lib/redmine/public
 </Directory>
 ErrorLog /var/log/httpd/redmine-error_log
 CustomLog /var/log/httpd/redmine-access_log common
+</VirtualHost>
+EOT
+## Setting phpMyAdmin httpd config
+cat <<-EOT >/etc/httpd/conf.d/phpmyadmin.conf
+Listen 3002
+<VirtualHost 192.168.2.200:3002>
+ServerName www.yjono.com
+DocumentRoot /var/lib/phpmyadmin
+<Directory "/var/lib/phpmyadmin">
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+</Directory>
+ErrorLog /var/log/httpd/phpmyadmin-error_log
+CustomLog /var/log/httpd/phpmyadmin-access_log common
 </VirtualHost>
 EOT
 
@@ -200,10 +217,6 @@ dnf install -y curl curl-devel || exit
 # passenger-install-apache2-module --auto --languages ruby
 # passenger-install-apache2-module --snippet >/etc/httpd/conf.d/passenger.conf
 
-## Change owner of host files 
-chown -R apache:apache /var/lib/testlink
-chown -R apache:apache /var/lib/redmine
-
 ## Setting Server IP hostnam
 cp /etc/hosts /etc/hosts.bak
 echo "192.168.2.200 www.yjono.com www" >>/etc/hosts
@@ -218,6 +231,20 @@ done
 ## サーバー起動時にhttpdがスタートするよう設定する
 systemctl enable httpd.service || exit 1
 
+
+## TestLinkやRedmineの設定を確認するため、MariaDBの内容を編集できるツール phpMyAdmin を入れておく
+mkdir ~/phpmyadmin
+cd ~/phpmyadmin/
+curl -O https://files.phpmyadmin.net/phpMyAdmin/4.9.4/phpMyAdmin-4.9.4-all-languages.zip
+unzip phpMyAdmin-4.9.4-all-languages.zip
+mv phpMyAdmin-4.9.4-all-languages /var/lib/phpMyAdmin
+
+
+## 権限設定 Change owner of dir,files 
+chown -R apache:apache /var/lib/testlink
+chown -R apache:apache /var/lib/redmine
+chown -R apache:apache /var/lib/phpmyadmin
+
 ## SELinux
 ## redmineのSELinux設定を追い込むのは非常に骨が折れるため、いったんOFFとしエラーログを記録しておく
 setenforce 0
@@ -225,12 +252,13 @@ sed -i.bak "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 
 # dnf install -y setools setools-console selinux-policy-devel policycoreutils-python-utils setroubleshoot-server || exit 1
 
-## 3000, 3001が未登録なら追加する
+## SELinux httpポートが未登録なら追加する
 #semanage port -l | grep http
 
-## 3000,3001のhttpポートアクセス許可
+## SELinux httpポートアクセス許可
 # semanage port -a -t http_port_t -p tcp 3000
 # semanage port -a -t http_port_t -p tcp 3001
+# semanage port -a -t http_port_t -p tcp 3002
 ## httpdプロセスにファイルアクセスを許可する
 # setsebool -P httpd_read_user_content 1
 # setsebool -P httpd_can_network_connect 1
