@@ -203,7 +203,7 @@ rm composer-setup.php
 ## Composerでphpmyadminをインストールする
 ./composer.phar create-project phpmyadmin/phpmyadmin
 
-mv phpmyadmin /var/lib/phpMyAdmin
+mv phpmyadmin /var/lib/phpmyadmin
 cd /var/lib/phpmyadmin
 cp /var/lib/phpmyadmin/config.sample.inc.php /var/lib/phpmyadmin/config.inc.php
 COOKIESECRET=$(mkpasswd -l 32 -d 8 -c 8 -C 8 -s 8)
