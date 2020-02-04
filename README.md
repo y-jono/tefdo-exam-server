@@ -20,7 +20,7 @@ LinuxOSがインストールされたサーバーを手元のマシンに作成�
 VagrantとVirtualBoxのバージョンは組み合わせがあります。
 うまく動かない時は[このページ](https://qiita.com/lunar_sword3/items/682fdd39c57a2319b83f)を参考にしてください。
 
-### (Option)VirtualBox guest addition plugin
+### VirtualBox guest addition plugin
 
 VirtualBoxの仮想マシンにゲスト拡張を自動で追加してくれるプラグインです。
 このタイミングでこのプライグインを入れておくと、仮想マシンとホストマシン間の共有ディレクトリ設定を後々楽にできます。
@@ -48,6 +48,16 @@ vagrant up
 次回仮想マシンを起動するときも `vagrant up` でOKです。仮想マシンが作り直されることはありません。
 
 [^1]: マシンイメージはダウンロードサイズが大きいため、通信料が従量課金のネットワークではやめた方がいいでしょう。
+
+**virtualbox guest additionをインストールする**
+
+ホストと仮想マシンのネットワークアダプタをつなぐために、VirtualBox Guest Additions を仮想マシンにインストールします。
+既に vagrant-vbguest をインストール済みなので、下記のコマンドで仮想マシンを再起動するだけでインストールできます。
+
+```shell
+cd .¥path¥to¥this¥repo
+vagrant reload
+```
 
 **vagrant upでエラーがでたら**
 
