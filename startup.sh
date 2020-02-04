@@ -4,7 +4,7 @@
 
 set -x
 
-function install() {
+function provision() {
 
 ## Update all dnf package
 dnf update -y || exit 1
@@ -124,7 +124,7 @@ echo "DROP DATABASE IF EXISTS db_redmine;" | mysql --defaults-file=/root/.my.cnf
 echo "create database db_redmine default character set utf8;" | mysql --defaults-file=/root/.my.cnf
 echo "grant all on db_redmine.* to $USERNAME@'localhost' identified by '$PASSWORD';" | mysql --defaults-file=/root/.my.cnf
 
-## MariaDB database for Testlink
+## MariaDB database for TestLink
 echo "DROP DATABASE IF EXISTS testlink;" | mysql --defaults-file=/root/.my.cnf
 echo "DROP USER 'testlinkuser'@'localhost';" | mysql --defaults-file=/root/.my.cnf
 echo "CREATE DATABASE testlink;" | mysql --defaults-file=/root/.my.cnf
@@ -178,12 +178,37 @@ dnf install -y curl curl-devel || exit
 ## phpMyAdmin
 ## TestLinkやRedmineの設定を確認するため、MariaDBの内容を編集できるツールを入れておく
 if [ ! -e /var/lib/phpmyadmin ]; then
-dnf install -y curl || exit 1
+dnf install -y curl php-json php-pecl-zip || exit 1
+
 mkdir ~/phpmyadmin
 cd ~/phpmyadmin/
-curl -O https://files.phpmyadmin.net/phpMyAdmin/4.9.4/phpMyAdmin-4.9.4-all-languages.zip
-unzip phpMyAdmin-4.9.4-all-languages.zip
-mv phpMyAdmin-4.9.4-all-languages /var/lib/phpMyAdmin
+
+## install composer
+EXPECTED_SIGNATURE="$(curl https://composer.github.io/installer.sig)"
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+ACTUAL_SIGNATURE="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+if [ "$EXPECTED_SIGNATURE" != "$ACTUAL_SIGNATURE" ]
+then
+    >&2 echo 'ERROR: Invalid installer signature'
+    rm composer-setup.php
+    exit 1
+fi
+
+php composer-setup.php --quiet
+RESULT=$?
+echo $RESULT
+rm composer-setup.php
+
+## Composerでphpmyadminをインストールする
+./composer.phar create-project phpmyadmin/phpmyadmin
+
+mv phpmyadmin /var/lib/phpMyAdmin
+cd /var/lib/phpmyadmin
+cp /var/lib/phpmyadmin/config.sample.inc.php /var/lib/phpmyadmin/config.inc.php
+COOKIESECRET=$(mkpasswd -l 32 -d 8 -c 8 -C 8 -s 8)
+sed -i.bak "s/\$cfg['blowfish_secret'] = '';/\$cfg['blowfish_secret'] = '$COOKIESECRET'/" /var/lib/phpmyadmin/config.inc.php
+
 ## 権限設定
 chown -R apache:apache /var/lib/phpmyadmin
 fi
@@ -265,6 +290,13 @@ systemctl enable httpd.service || exit 1
 
 ## Option サーバーに乗り込んで操作するときに便利なツール
 # dnf -y install byobu || exit 1
+
+echo "NEWMYSQLPASSWORD"
+echo $NEWMYSQLPASSWORD
+echo "USERNAME"
+echo $USERNAME
+echo "PASSWORD"
+echo $PASSWORD
 
 ## 全ての設定が再起動しても反映されていることを保証する為に、Provisioning完了後は再起動して確認する
 reboot
@@ -359,4 +391,4 @@ SELINUX_ENABLED=false
 
 ## OSがCentOS8.1ならインストール開始
 VERSION=$(rpm -q centos-release --qf "%{VERSION}")
-[ "$VERSION" = "8.1" ] && install
+[ "$VERSION" = "8.1" ] && provision

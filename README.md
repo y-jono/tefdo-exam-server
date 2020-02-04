@@ -1,7 +1,7 @@
 # このリポジトリについて
 
 このリポジトリはテストケースを管理するためのサービスである[TestLink](http://testlink.org)と、バグを管理するサービスである[Redmine](https://www.redmine.org)を作成できます。
-プロビジョニングスクリプト`startup.sh`を使うとTestlinkサービスとRedmineサービスを提供するサーバーを作成できます。
+プロビジョニングスクリプト`startup.sh`を使うとTestLinkサービスとRedmineサービスを提供するサーバーを作成できます。
 
 - 利用ツール: Vagrant
 - OS: CentOS 8
@@ -78,7 +78,7 @@ cd .¥path¥to¥this¥repo
 vagrant provision
 ```
 
-ブラウザで[Testlink](http://192.168.2.200:3001)と[Redmine](http://192.168.2.200:3000)が起動していることを確認しましょう。
+ブラウザで[TestLink](http://192.168.2.200:3001)と[Redmine](http://192.168.2.200:3000)が起動していることを確認しましょう。
 
 **ブラウザに何も表示されなかったら**
 
@@ -114,7 +114,7 @@ The SSH command responded with a non-zero
 
 ## サービスを触ってみる
 
-- [Testlink日本語化プロジェクト](https://w.atwiki.jp/testlink/pages/25.html)
+- [TestLink日本語化プロジェクト](https://w.atwiki.jp/testlink/pages/25.html)
 - [Redmine.jp](http://redmine.jp)
 - [Redmineデフォルトデータのロード](http://redmine.jp/tech_note/first-step/admin/load_default_data/)
 
