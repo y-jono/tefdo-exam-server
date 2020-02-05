@@ -47,21 +47,6 @@ dnf -y install git svn || exit 1
 dnf -y install httpd-devel mod_ssl php php-devel php-pear mariadb-server \
  php-mbstring php-xml php-gd php-mysqlnd || exit 1
 
-## php.ini settings for testlink 
-cp /etc/php.ini /etc/php.ini.bak
-sed -i "s/session.gc_maxlifetime = 1440/session.gc_maxlifetime = 2880/" /etc/php.ini
-sed -i "s/max_execution_time = 30/max_execution_time = 120/" /etc/php.ini
-
-## git clone testlink
-if [ ! -e /var/lib/testlink ]; then
-    git clone https://github.com/TestLinkOpenSourceTRMS/testlink-code.git -b 1.9.20 testlink
-    mv testlink /var/lib/
-    cp /var/lib/testlink/custom_config.inc.php.example /var/lib/testlink/custom_config.inc.php
-    sed -i.bak "s|// \$tlCfg->log_path = '/var/testlink-ga-testlink-code/logs/';|\$tlCfg->log_path = '/var/lib/testlink/logs/';|" /var/lib/testlink/custom_config.inc.php
-    sed -i.bak "s|// \$g_repositoryPath = '/var/testlink-ga-testlink-code/upload_area/';|\$g_repositoryPath = '/var/lib/testlink/upload_area/';|" /var/lib/testlink/custom_config.inc.php
-    chown -R apache:apache /var/lib/testlink
-fi
-
 ## dnf install packages for building Redmine(Ruby on Rails)
 dnf -y install libxml2-devel libxslt-devel gcc bzip2 openssl-devel \
  zlib-devel gdbm-devel ncurses-devel make autoconf automake bison gcc-c++ \
@@ -132,6 +117,26 @@ echo "CREATE USER 'testlinkuser'@'localhost' IDENTIFIED BY '$PASSWORD';" | mysql
 echo "GRANT ALL PRIVILEGES ON testlink.* TO 'testlinkuser'@'localhost' IDENTIFIED BY '$PASSWORD' WITH GRANT OPTION;" | mysql --defaults-file=/root/.my.cnf
 echo "flush privileges;" | mysql --defaults-file=/root/.my.cnf
 
+## TestLink php.ini settings
+cp /etc/php.ini /etc/php.ini.bak
+sed -i "s/session.gc_maxlifetime = 1440/session.gc_maxlifetime = 2880/" /etc/php.ini
+sed -i "s/max_execution_time = 30/max_execution_time = 120/" /etc/php.ini
+
+## git clone testlink
+if [ ! -e /var/lib/testlink ]; then
+    git clone https://github.com/TestLinkOpenSourceTRMS/testlink-code.git -b 1.9.20 testlink
+    mv testlink /var/lib/
+    cp /var/lib/testlink/custom_config.inc.php.example /var/lib/testlink/custom_config.inc.php
+    sed -i.bak "s|// \$tlCfg->log_path = '/var/testlink-ga-testlink-code/logs/';|\$tlCfg->log_path = '/var/lib/testlink/logs/';|" /var/lib/testlink/custom_config.inc.php
+    sed -i.bak "s|// \$g_repositoryPath = '/var/testlink-ga-testlink-code/upload_area/';|\$g_repositoryPath = '/var/lib/testlink/upload_area/';|" /var/lib/testlink/custom_config.inc.php
+
+    cd /var/lib/testlink/install/sql/mysql
+    sed -i.bak "s/\`YOUR_TL_DBNAME\`/testlink/" testlink_create_udf0.sql
+    mysql --defaults-file=/root/.my.cnf < testlink_create_udf0.sql
+
+    chown -R apache:apache /var/lib/testlink
+fi
+
 ## svn checkout Redmine
 if [ ! -e /var/lib/redmine ]; then
 svn checkout http://svn.redmine.org/redmine/branches/3.4-stable /var/lib/redmine || exit 1
@@ -178,6 +183,7 @@ dnf install -y curl curl-devel || exit
 ## phpMyAdmin
 ## TestLinkやRedmineの設定を確認するため、MariaDBの内容を編集できるツールを入れておく
 if [ ! -e /var/lib/phpmyadmin ]; then
+
 dnf install -y curl php-json php-pecl-zip || exit 1
 
 mkdir ~/phpmyadmin
@@ -211,6 +217,7 @@ sed -i.bak "s/\$cfg['blowfish_secret'] = '';/\$cfg['blowfish_secret'] = '$COOKIE
 
 ## 権限設定
 chown -R apache:apache /var/lib/phpmyadmin
+
 fi
 
 ## Apache httpd の設定
@@ -305,6 +312,7 @@ reboot
 
 ## インターネットに一般公開するサーバーはセキリティ担保のためにSELinuxを有効にする
 function enable_selinux() {
+    
 dnf install -y setools setools-console selinux-policy-devel policycoreutils-python-utils setroubleshoot-server || exit 1
 
 ## SELinux httpポートが未登録なら追加する
