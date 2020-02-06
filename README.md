@@ -98,7 +98,10 @@ cd .¥path¥to¥this¥repo
 vagrant provision
 ```
 
-ブラウザで[TestLink](http://192.168.2.200:3001)と[Redmine](http://192.168.2.200:3000)が起動していることを確認しましょう。
+provisionが無事に終了すると、mysql, testlinkのユーザ名とパスワードが画面に出力されます。忘れずメモしてください。
+このあとTestLinkのセットアップやphpMyAdminへのログインで使います。
+
+ブラウザで[TestLink](http://192.168.2.200:3001)と[phpMyAdmin](http://192.168.2.200:3002)が起動していることを確認しましょう。
 
 **ブラウザに何も表示されなかったら**
 
@@ -137,7 +140,7 @@ The SSH command responded with a non-zero
 - [TestLink日本語化プロジェクト](https://w.atwiki.jp/testlink/pages/25.html)
 - [Redmine.jp](http://redmine.jp)
 - [Redmineデフォルトデータのロード](http://redmine.jp/tech_note/first-step/admin/load_default_data/)
-
+- [phpMyAdmin(DBの内容確認用)](https://docs.phpmyadmin.net/ja/latest/)
 
 **redmineが動かないことがあったら**
 
