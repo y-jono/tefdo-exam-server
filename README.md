@@ -16,7 +16,7 @@ LinuxOSがインストールされたサーバーを手元のマシンに作成�
 
 [ダウンロードページ](https://www.vagrantup.com/downloads.html)から手元のOSにあうインストーラーをダウンロードしてください。
 
-**2.2.7をインストールする前に**
+**vagrantをインストールする前に**
 
 2020/2/5現在、 vagrant 2.2.7 のインストール及びアンインストールが失敗する現象がみられます。
 この後のvbguestプラグインインストールもうまくいかないようです。
@@ -38,6 +38,18 @@ VirtualBoxの仮想マシンにゲスト拡張を自動で追加してくれる�
 ```shell
 vagrant plugin install vagrant-vbguest
 ```
+
+
+# VirtualBox
+
+仮想マシン環境を動かすツールとしてVirtualBoxを利用します。
+非商用目的であればVMWareを使うことも可能です（この場合は有償なので[ここ](https://www.vagrantup.com/vmware/#buy-now)から購入する）
+
+VagrantとVirtualBoxはバージョンをうまく組み合わせる必要があります。
+2020/2/5現在、 6.0系の最新である6.0.16を使うのが無難です。
+
+https://www.virtualbox.org/wiki/Download_Old_Builds_6_0
+
 
 # ローカルマシンでサービスを試す
 
